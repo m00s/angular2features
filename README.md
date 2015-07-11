@@ -1,12 +1,17 @@
-* [Introduction](#Introduction)
-* [Annotations](#Annotations)
-  * [Directives](#Directives)
-  * [Components](#Components)
-* [Change detection](#Change detection)
-* [Core](#Core)
+# Angular 2 features
 
-
-# Angular 2
+* [Annotations](#annotations)
+  * [Directives](#directives)
+  * [Components](#components)
+* [Templates](#templates)
+* [Change detection](#changedetection)
+* [Core](#core)
+* [DI](#di)
+* [Forms](#forms)
+* [HTTP](#http)
+* [Pipes](#pipes)
+* [Router](#router)
+* [Test](#test)
 
 ## Annotations
 ### Directives
@@ -57,7 +62,7 @@ Notice that data binding will work with this decorator with no further effort as
 <span tooltip="Greetings {{user}}!">Some text here.</span>
 ```
 
-Angular applications do not have a main method. Instead they have a root Component. Dependency Injection then assembles the directives into a working Angular application.
+**NOTE:** Angular applications do not have a main method. Instead they have a root Component. Dependency Injection then assembles the directives into a working Angular application.
 
 ###Components
 A component is a directive which uses shadow DOM to create encapsulate visual behavior. Components are typically used to create UI widgets or to break up the application into smaller components.
@@ -128,12 +133,73 @@ Example of usage:
 <button (click)="pane.toggle()">toggle</button>
 
 ```
+<!-- -------------------------- -->
+### Templates
+-----------------------------------
+Templates are markup which is added to HTML to declaratively describe how the application model should be
+projected to DOM as well as which DOM events should invoke which methods on the controller. Templates contain
+syntax which is core to Angular and allows for data-binding, event-binding, template-instantiation.
 
+The design of the template syntax has these properties:
+
+
+* All data-binding expressions are easily identifiable. (i.e. there is never an ambiguity whether the value should be
+  interpreted as string literal or as an expression.)
+* All events and their statements are easily identifiable.
+* All places of DOM instantiation are easily identifiable.
+* All places of variable declaration are easily identifiable.
+
+The above properties guarantee that the templates are easy to parse by tools (such as IDEs) and reason about by people.
+At no point is it necessary to understand which directives are active or what their semantics are in order to reason
+about the template runtime characteristics.
+
+<!-- -------------------------- -->
 ### Change detection
+-----------------------------------
+<!-- -------------------------- -->
 ### Core
+-----------------------------------
+<!-- -------------------------- -->
 ### DI
+-----------------------------------
+<!-- -------------------------- -->
 ### Forms
+-----------------------------------
+<!-- -------------------------- -->
 ### HTTP
+-----------------------------------
+<!-- -------------------------- -->
 ### Pipes
+-----------------------------------
+<!-- -------------------------- -->
+
+Pipes can be appended on the end of the expressions to translate the value to a different format. Typically used
+to control the stringification of numbers, dates, and other data, but can also be used for ordering, mapping, and
+reducing arrays. Pipes can be chained.
+
+**NOTE:** Pipes are known as filters in Angular v1.
+
+Pipes syntax is:
+
+``` javascript
+<div class="movie-copy">
+  <p>
+    {{ model.getValue('copy') | async | uppercase }}
+  </p>
+  <ul>
+    <li>
+      <b>Starring</b>: {{ model.getValue('starring') | async }}
+    </li>
+    <li>
+      <b>Genres</b>: {{ model.getValue('genres') | async }}
+    </li>
+  <ul>
+</div>
+```
+
+<!-- -------------------------- -->
 ### Router
+-----------------------------------
+<!-- -------------------------- -->
 ### Test
+-----------------------------------
