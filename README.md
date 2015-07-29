@@ -181,7 +181,7 @@ Where:
 * `expression` is a valid expression (as defined in section below).
 
 Example:
-```
+``` html
 <div [title]="user.firstName">
 ```
 
@@ -205,13 +205,13 @@ reason Angular also supports a canonical version which is prefixed using `bind-`
 Property bindings are the only data bindings which Angular supports, but for convenience Angular supports an interpolation
 syntax which is just a short hand for the data binding syntax.
 
-```
+``` html
 <span>Hello {{name}}!</span>
 ```
 
 is a short hand for:
 
-```
+``` html
 <span [text|0]=" 'Hello ' + stringify(name) + '!'">_</span>
 ```
 
@@ -221,13 +221,13 @@ is not the first one.
 
 Similarly the same rules apply to interpolation inside attributes.
 
-```
+``` html
 <span title="Hello {{name}}!"></span>
 ```
 
 is a short hand for:
 
-```
+``` html
 <span [title]=" 'Hello ' + stringify(name) + '!'"></span>
 ```
 
@@ -240,7 +240,7 @@ DOM structure we need the ability to define child templates, and then instantiat
 Views than can be inserted and removed as needed to change the DOM structure.
 
 **Short form:**
-```
+``` html
 Hello {{user}}!
 <div template="ng-if: isAdministrator">
   ...administrator menu here...
@@ -248,7 +248,7 @@ Hello {{user}}!
 ```
 
 **Canonical form:**
-```
+``` html
 Hello {{user}}!
 <template [ng-if]="isAdministrator">
   <div>
@@ -272,7 +272,7 @@ Where:
 Often times it is necessary to encode a lot of different bindings into a template to control how the instantiation
 of the templates occurs. One such example is `ng-for`.
 
-```
+``` html
 <form #foo=form>
 </form>
 <ul>
@@ -291,7 +291,7 @@ Where:
 The above example is explicit but quite wordy. For this reason in most situations a short hand version of the
 syntax is preferable.
 
-```
+``` html
 <ul>
   <li template="ng-for; #person; of=people; #i=index;">{{i}}. {{person}}<li>
 </ul>
@@ -301,7 +301,7 @@ Notice how each key value pair is translated to a `key=value;` statement in the 
 repeat syntax a much shorter, but we can do better. Turns out that most punctuation is optional in the short version
 which allows us to further shorten the text.
 
-```
+``` html
 <ul>
   <li template="ng-for #person of people #i=index">{{i}}. {{person}}<li>
 </ul>
@@ -310,7 +310,7 @@ which allows us to further shorten the text.
 We can also optionally use `var` instead of `#` and add `:` to `for` which creates the following recommended
 microsyntax for `ng-for`.
 
-```
+``` html
 <ul>
   <li template="ng-for: var person of people; var i=index">{{i}}. {{person}}<li>
 </ul>
@@ -318,7 +318,7 @@ microsyntax for `ng-for`.
 
 Finally, we can move the `ng-for` keyword to the left hand side and prefix it with `*` as so:
 
-```
+``` html
 <ul>
   <li *ng-for="var person of people; var i=index">{{i}}. {{person}}<li>
 </ul>
@@ -469,7 +469,7 @@ Any object can be a token. For performance reasons, however, DI does not deal wi
 
 ##### Example
 
-```
+``` javascript
 class Engine {
 }
 
@@ -495,20 +495,20 @@ An injector instantiates objects lazily, only when needed, and then caches them.
 
 Compare
 
-```
+``` javascript
 var car = inj.get(Car); //instantiates both an Engine and a Car
 ```
 
 with
 
-```
+``` javascript
 var engine = inj.get(Engine); //instantiates an Engine
 var car = inj.get(Car); //instantiates a Car
 ```
 
 and with
 
-```
+``` javascript
 var car = inj.get(Car); //instantiates both an Engine and a Car
 var engine = inj.get(Engine); //reads the Engine from the cache
 ```
@@ -520,7 +520,7 @@ To avoid bugs make sure the registered objects have side-effect-free constructor
 
 Injectors are hierarchical.
 
-```
+``` javascript
 var child = injector.resolveAndCreateChild([
 	bind(Engine).toClass(TurboEngine)
 ]);
@@ -533,7 +533,7 @@ var car = child.get(Car); // uses the Car binding from the parent injector and E
 
 You can bind to a class, a value, or a factory. It is also possible to alias existing bindings.
 
-```
+``` javascript
 var inj = Injector.resolveAndCreate([
 	bind(Car).toClass(Car),
 	bind(Engine).toClass(Engine)
@@ -556,7 +556,7 @@ var inj = Injector.resolveAndCreate([
 
 You can bind any token.
 
-```
+``` javascript
 var inj = Injector.resolveAndCreate([
 	bind(Car).toFactory((e) => new Car(), ["engine!"]),
 	bind("engine!").toClass(Engine)
@@ -565,7 +565,7 @@ var inj = Injector.resolveAndCreate([
 
 If you want to alias an existing binding, you can do so using `toAlias`:
 
-```
+``` javascript
 var inj = Injector.resolveAndCreate([
 	bind(Engine).toClass(Engine),
 	bind("engine!").toAlias(Engine)
@@ -575,7 +575,7 @@ which implies `inj.get(Engine) === inj.get("engine!")`.
 
 Note that tokens and factory functions are decoupled.
 
-```
+``` javascript
 bind("some token").toFactory(someFactory);
 ```
 
@@ -586,7 +586,7 @@ The `someFactory` function does not have to know that it creates an object for `
 
 Injector can create binding on the fly if we enable default bindings.
 
-```
+``` javascript
 var inj = Injector.resolveAndCreate([], {defaultBindings: true});
 var car = inj.get(Car); //this works as if `bind(Car).toClass(Car)` and `bind(Engine).toClass(Engine)` were present.
 ```
@@ -598,7 +598,7 @@ This can be useful in tests, but highly discouraged in production.
 
 A dependency can be synchronous, asynchronous, or lazy.
 
-```
+``` javascript
 class Car {
 	constructor(@Inject(Engine) engine) {} // sync
 }
@@ -630,7 +630,7 @@ Suppose we have an object that requires some data from the server.
 
 This is one way to implement it:
 
-```
+``` javascript
 class UserList {
 	loadUsers() {
 		this.usersLoaded = fetchUsersUsingHttp();
@@ -649,7 +649,7 @@ Both the UserList and UserController classes have to deal with asynchronicity. T
 
 The DI library supports asynchronous bindings, which can be used to clean up UserList and UserController.
 
-```
+``` javascript
 class UserList {
 	constructor(users:List){
 		this.users = users;
@@ -675,7 +675,7 @@ Note that asynchronicity have not disappeared. We just pushed out it of services
 
 DI also supports asynchronous dependencies, so we can make some of our services responsible for dealing with async.
 
-```
+``` javascript
 class UserList {
 	constructor(users:List){
 		this.users = users;
