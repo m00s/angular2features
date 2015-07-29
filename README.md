@@ -1,4 +1,5 @@
-* [Official doc](https://github.com/angular/angular/tree/master/modules/angular2/docs)
+## Sources
+* [Official documentation](https://github.com/angular/angular/tree/master/modules/angular2/docs)
 * [Viktor Savkin's articles](http://victorsavkin.com/)
 
 # Angular 2 features
