@@ -187,7 +187,7 @@ Let's examine a simple View and all of its parts in detail.
 
 Assume the following Component:
 
-```
+``` javascript
 class Greeter {
   greeting:string;
 
@@ -199,7 +199,7 @@ class Greeter {
 
 And assume following HTML View:
 
-```
+``` html
 <div>
   Your name:
   <input var="name" type="Text">
@@ -213,7 +213,7 @@ create an instance of the View. The instantiation process involves cloning the a
 locating all of the elements which contain bindings and finally instantiating the Directives
 associated with the template. (See compilation for more details.)
 
-```
+``` html
 <div>                             | viewA(greeter)
   Your name:                      | viewA(greeter)
   <input var="name" type="Text">  | viewA(greeter): local variable 'name'
@@ -223,7 +223,7 @@ associated with the template. (See compilation for more details.)
 ```
 
 The resulting View instance looks something like this (simplified pseudo code):
-```
+``` javascript
 viewA = new View({
   template: ...,
   context: new Greeter(),
@@ -249,7 +249,7 @@ user. In Angular this is done by inserting child views into the ViewContainer.
 
 Let's start with a View such as:
 
-```
+``` html
 <ul>
   <li template="ng-for: #person of people">{{person}}</li>
 </ul>
@@ -257,13 +257,13 @@ Let's start with a View such as:
 
 During the compilation process the Compiler breaks the HTML template into these two ProtoViews:
 
-```
+``` html
   <li>{{person}}</li>   | protoViewB(Locals)
 ```
 
 and
 
-```
+``` html
 <ul>                    | protoViewA(someContext)
   <template></template> | protoViewA(someContext): protoViewB
 </ul>                   | protoViewA(someContext)
@@ -274,7 +274,7 @@ The next step is to compose these two ProtoViews into an actual view which is re
 
 *Step 1:* Instantiate `viewA`
 
-```
+``` html
 <ul>                    | viewA(someContext)
   <template></template> | viewA(someContext): new NgFor(new ViewContainer(protoViewB))
 </ul>                   | viewA(someContext)
@@ -287,7 +287,7 @@ has a reference to `protoViewA`).
 *Step3:* As the `NgFor` directive unrolls it asks the `ViewContainerRef` to instantiate `protoViewB` and insert
 it after the `ViewContainer` anchor. This is repeated for each `person` in `people`. Notice that
 
-```
+``` html
 <ul>                    | viewA(someContext)
   <template></template> | viewA(someContext): new NgFor(new ViewContainer(protoViewB))
   <li>{{person}}</li>   | viewB0(locals0(someContext))
@@ -300,7 +300,7 @@ the evaluation context for the `viewB0` and `viewB1` are `locals0` and `locals1`
 Locals allow the introduction of new local variables visible only within the scope of the View, and
 delegate any unknown references to the parent context.
 
-```
+``` html
 <ul>                    | viewA
   <template></template> | viewA: new NgFor(new ViewContainer(protoViewB))
   <li>Alice</li>        | viewB0
@@ -321,7 +321,7 @@ A View can also contain Components. Components contain Shadow DOM for encapsulat
 rendering state. Unlike ViewContainers which can contain zero or more Views, the Component always contains
 exactly one Shadow View.
 
-```
+``` html
 <div>                            | viewA
   <my-component>                 | viewA
     #SHADOW_ROOT                 | (encapsulation boundary)
@@ -341,7 +341,7 @@ Each View acts as a context for evaluating its expressions. There are two kinds 
 
 Let's assume following component:
 
-```
+``` javascript
 class Greeter {
   greeting:string;
 
@@ -353,7 +353,7 @@ class Greeter {
 
 And assume the following HTML View:
 
-```
+``` html
 <div>                             | viewA(greeter)
   Your name:                      | viewA(greeter)
   <input var="name" type="Text">  | viewA(greeter)
@@ -365,7 +365,7 @@ And assume the following HTML View:
 The above UI is built using a single View, and hence a single context `greeter`. It can be expressed
 in this pseudo-code.
 
-```
+``` javascript
 var greeter = new Greeter();
 ```
 
@@ -374,7 +374,8 @@ The View contains two bindings:
 1. `greeting`: This is bound to the `greeting` property on the `Greeter` instance.
 2. `name.value`: This poses a problem. There is no `name` property on the `Greeter` instance. To solve
 this we wrap the `Greeter` instance in the `Local` instance like so:
-```
+
+``` javascript
 var greeter = new Locals(new Greeter(), {name: ref_to_input_element })
 ```
 
