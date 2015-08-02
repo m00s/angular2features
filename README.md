@@ -22,7 +22,6 @@
 * [Change detection](#change-detection)
   * [Immutable Objects](#immutable-objects) 
   * [Observable Objects](#observable-objects)
-* [Core](#core)
 * [DI](#di)
   * [Core Abstractions](#core-abstractions)
   * [Key and Token](#key-and-token)
@@ -30,7 +29,6 @@
   * [Bindings](#bindings)
   * [Dependencies](#dependencies)
   * [Async](#async)
-* [Forms](#forms)
 * [HTTP](#http)
 * [Pipes](#pipes)
 * [Router](#router)
@@ -688,10 +686,6 @@ Assuming that changes happen rarely and the components form a balanced tree, usi
 - By default, the change detection system walks the whole tree. But if you use immutable objects or observables, you can take advantage of them and check parts of the tree only if they "really change".
 - These optimizations compose and do not break the guarantees the change detection provides.
 
-
-<!-- -------------------------- -->
-### Core
------------------------------------
 <!-- -------------------------- -->
 ### DI
 -----------------------------------
@@ -956,9 +950,6 @@ var uc = inj.get(UserController);
 
 We can get an instance of UserController synchronously. It is possible because we made UserController responsible for dealing with asynchronicity, so the initialization code does not have to.
 
-<!-- -------------------------- -->
-### Forms
------------------------------------
 <!-- -------------------------- -->
 ### HTTP
 -----------------------------------
