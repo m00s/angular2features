@@ -20,15 +20,17 @@
   * [Inline Templates](#inline-templates)
   * [Template Microsyntax](#template-microsyntax)
 * [Change detection](#change-detection)
-  * [Immutable Objects](#immutable-objects) 
+  * [Immutable Objects](#immutable-objects)
   * [Observable Objects](#observable-objects)
 * [DI](#di)
   * [Core Abstractions](#core-abstractions)
-  * [Key and Token](#key-and-token)
-  * [Injector](#injector)
+  * [Example](#example)
+  * [Child Injectors and Dependencies](#child-injectors-and-dependencies)
+    * [Constraints](#constraints)
+    * [DI Does Not Walk Down](#di-does-not-walk-down)
   * [Bindings](#bindings)
-  * [Dependencies](#dependencies)
-  * [Async](#async)
+    * [Resolved Bindings](#resolved-bindings)
+  * [Transient Dependencies](#transient-dependencies)
 * [HTTP](#http)
 * [Pipes](#pipes)
 * [Router](#router)
@@ -629,7 +631,7 @@ To implement this just set the change detection strategy to `ON_PUSH`.
 ``` javascript
 @Component({changeDetection:ON_PUSH})
 class ImmutableTodoCmp {
-  todo:Todo; 
+  todo:Todo;
 }
 ```
 
@@ -694,9 +696,10 @@ Assuming that changes happen rarely and the components form a balanced tree, usi
 
 The library is built on top of the following core abstractions: `Injector`, `Binding`, and `Dependency`.
 
-* An injector resolves dependencies and creates objects.
-* A binding maps a token to a factory function and a list of dependencies. So a binding defines how to create an object. A binding can be synchronous or asynchronous.
-* A dependency points to a token and contains extra information on how the object corresponding to that token should be injected.
+ * An injector is created from a set of bindings.
+ * An injector resolves dependencies and creates objects.
+ * A binding maps a token, such as a string or class, to a factory function and a list of dependencies. So a binding defines how to create an object.
+ * A dependency points to a token and contains extra information on how the object corresponding to that token should be injected.
 
 ```
 [Injector]
@@ -712,15 +715,7 @@ The library is built on top of the following core abstractions: `Injector`, `Bin
                             [Token]   [Flags]
 ```
 
-
-
-#### Key and Token
-
-Any object can be a token. For performance reasons, however, DI does not deal with tokens directly, and, instead, wraps every token into a Key. See the section on "Key" to learn more.
-
-
-
-##### Example
+#### Example
 
 ``` javascript
 class Engine {
@@ -738,13 +733,13 @@ var inj = Injector.resolveAndCreate([
 var car = inj.get(Car);
 ```
 
-In this example we create two bindings: one for Car and one for Engine. `@Inject(Engine)` declares that Car depends on Engine.
+In this example we create two bindings: one for Car and one for Engine. `@Inject(Engine)` declares a dependency on Engine.
 
 
 
 #### Injector
 
-An injector instantiates objects lazily, only when needed, and then caches them.
+An injector instantiates objects lazily, only when asked for, and then caches them.
 
 Compare
 
@@ -756,7 +751,7 @@ with
 
 ``` javascript
 var engine = inj.get(Engine); //instantiates an Engine
-var car = inj.get(Car); //instantiates a Car
+var car = inj.get(Car); //instantiates a Car (reuses Engine)
 ```
 
 and with
@@ -766,19 +761,97 @@ var car = inj.get(Car); //instantiates both an Engine and a Car
 var engine = inj.get(Engine); //reads the Engine from the cache
 ```
 
-To avoid bugs make sure the registered objects have side-effect-free constructors. If it is the case, an injector acts like a hash map with all of the registered objects created at once.
+To avoid bugs make sure the registered objects have side-effect-free constructors. In this case, an injector acts like a hash map, where the order in which the objects got created does not matter.
 
 
-##### Child Injector
+#### Child Injectors and Dependencies
 
 Injectors are hierarchical.
 
-``` javascript
-var child = injector.resolveAndCreateChild([
-	bind(Engine).toClass(TurboEngine)
+``` js
+var parent = Injector.resolveAndCreate([
+  bind(Engine).toClass(TurboEngine)
+]);
+var child = parent.resolveAndCreateChild([Car]);
+
+var car = child.get(Car); // uses the Car binding from the child injector and Engine from the parent injector.
+```
+
+Injectors form a tree.
+
+```
+  GrandParentInjector
+   /              \
+Parent1Injector  Parent2Injector
+  |
+ChildInjector
+```
+
+The dependency resolution algorithm works as follows:
+
+``` js
+// this is pseudocode.
+var inj = this;
+while (inj) {
+  if (inj.hasKey(requestedKey)) {
+    return inj.get(requestedKey);
+  } else {
+    inj = inj.parent;
+  }
+}
+throw new NoBindingError(requestedKey);
+```
+
+So in the following example
+
+``` js
+class Car {
+  constructor(e: Engine){}
+}
+```
+
+DI will start resolving `Engine` in the same injector where the `Car` binding is defined. It will check whether that injector has the `Engine` binding. If it is the case, it will return that instance. If not, the injector will ask its parent whether it has an instance of `Engine`. The process continues until either an instance of `Engine` has been found, or we have reached the root of the injector tree.
+
+##### Constraints
+
+You can put upper and lower bound constraints on a dependency. For instance, the `@Self` decorator tells DI to look for `Engine` only in the same injector where `Car` is defined. So it will not walk up the tree.
+
+``` js
+class Car {
+  constructor(@Self() e: Engine){}
+}
+```
+
+A more realistic example is having two bindings that have to be provided together (e.g., NgModel and NgRequiredValidator.)
+
+The `@Host` decorator tells DI to look for `Engine` in this injector, its parent, until it reaches a host (see the section on hosts.)
+
+``` js
+class Car {
+  constructor(@Host() e: Engine){}
+}
+```
+
+The `@SkipSelf` decorator tells DI to look for `Engine` in the whole tree starting from the parent injector.
+
+``` js
+class Car {
+  constructor(@SkipSelf() e: Engine){}
+}
+```
+
+###### DI Does Not Walk Down
+
+
+Dependency resolution only walks up the tree. The following will throw because DI will look for an instance of `Engine` starting from `parent`.
+
+``` js
+var parent = Injector.resolveAndCreate([Car]);
+var child = parent.resolveAndCreateChild([
+  bind(Engine).toClass(TurboEngine)
 ]);
 
-var car = child.get(Car); // uses the Car binding from the parent injector and Engine from the child injector
+parent.get(Car); // will throw NoBindingError
 ```
 
 
@@ -786,170 +859,103 @@ var car = child.get(Car); // uses the Car binding from the parent injector and E
 
 You can bind to a class, a value, or a factory. It is also possible to alias existing bindings.
 
-``` javascript
+``` js
 var inj = Injector.resolveAndCreate([
-	bind(Car).toClass(Car),
-	bind(Engine).toClass(Engine)
+  bind(Car).toClass(Car),
+  bind(Engine).toClass(Engine)
 ]);
 
 var inj = Injector.resolveAndCreate([
-	Car,  // syntax sugar for bind(Car).toClass(Car)
-	Engine
+  Car,  // syntax sugar for bind(Car).toClass(Car)
+  Engine
 ]);
 
 var inj = Injector.resolveAndCreate([
-	bind(Car).toValue(new Car(new Engine()))
+  bind(Car).toValue(new Car(new Engine()))
 ]);
 
 var inj = Injector.resolveAndCreate([
-	bind(Car).toFactory((e) => new Car(e), [Engine]),
-	bind(Engine).toFactory(() => new Engine())
+  bind(Car).toFactory((e) => new Car(e), [Engine]),
+  bind(Engine).toFactory(() => new Engine())
 ]);
 ```
 
 You can bind any token.
 
-``` javascript
+``` js
 var inj = Injector.resolveAndCreate([
-	bind(Car).toFactory((e) => new Car(), ["engine!"]),
-	bind("engine!").toClass(Engine)
+  bind(Car).toFactory((e) => new Car(), ["engine!"]),
+  bind("engine!").toClass(Engine)
 ]);
 ```
 
 If you want to alias an existing binding, you can do so using `toAlias`:
 
-``` javascript
+``` js
 var inj = Injector.resolveAndCreate([
-	bind(Engine).toClass(Engine),
-	bind("engine!").toAlias(Engine)
+  bind(Engine).toClass(Engine),
+  bind("engine!").toAlias(Engine)
 ]);
 ```
 which implies `inj.get(Engine) === inj.get("engine!")`.
 
 Note that tokens and factory functions are decoupled.
 
-``` javascript
+``` js
 bind("some token").toFactory(someFactory);
 ```
 
 The `someFactory` function does not have to know that it creates an object for `some token`.
 
+##### Resolved Bindings
 
-##### Default Bindings
+When DI receives `bind(Car).toClass(Car)`, it needs to do a few things before before it can create an instance of `Car`:
 
-Injector can create binding on the fly if we enable default bindings.
+- It needs to reflect on `Car` to create a factory function.
+- It needs to normalize the dependencies (e.g., calculate lower and upper bounds).
 
-``` javascript
-var inj = Injector.resolveAndCreate([], {defaultBindings: true});
-var car = inj.get(Car); //this works as if `bind(Car).toClass(Car)` and `bind(Engine).toClass(Engine)` were present.
+The result of these two operations is a `ResolvedBinding`.
+
+The `resolveAndCreate` and `resolveAndCreateChild` functions resolve passed-in bindings before creating an injector. But you can resolve bindings yourself using `Injector.resolve([bind(Car).toClass(Car)])`. Creating an injector from pre-resolved bindings is faster, and may be needed for performance sensitive areas.
+
+You can create an injector using a list of resolved bindings.
+
+``` js
+var listOfResolvingBindings = Injector.resolve([Binding1, Binding2]);
+var inj = Injector.fromResolvedBindings(listOfResolvingBindings);
+inj.createChildFromResolvedBindings(listOfResolvedBindings);
 ```
 
-This can be useful in tests, but highly discouraged in production.
 
+##### Transient Dependencies
 
-#### Dependencies
+An injector has only one instance created by each registered binding.
 
-A dependency can be synchronous, asynchronous, or lazy.
-
-``` javascript
-class Car {
-	constructor(@Inject(Engine) engine) {} // sync
-}
-
-class Car {
-	constructor(engine:Engine) {} // syntax sugar for `constructor(@Inject(Engine) engine:Engine)`
-}
-
-class Car {
-	constructor(@InjectPromise(Engine) engine:Promise) {} //async
-}
-
-class Car {
-	constructor(@InjectLazy(Engine) engineFactory:Function) {} //lazy
-}
+``` js
+inj.get(MyClass) === inj.get(MyClass); //always holds
 ```
 
-* The type annotation is used by DI only when no @Inject annotations are present.
-* `InjectPromise` tells DI to inject a promise (see the section on async for more information).
-* `InjectLazy` enables deferring the instantiation of a dependency by injecting a factory function.
+If we need a transient dependency, something that we want a new instance of every single time, we have two options.
 
+We can create a child injector for each new instance:
 
-
-#### Async
-
-Asynchronicity makes code hard to understand and unit test. DI provides two mechanisms to help with it: asynchronous bindings and asynchronous dependencies.
-
-Suppose we have an object that requires some data from the server.
-
-This is one way to implement it:
-
-``` javascript
-class UserList {
-	loadUsers() {
-		this.usersLoaded = fetchUsersUsingHttp();
-		this.usersLoaded.then((users) => this.users = users);
-	}
-}
-
-class UserController {
-	constructor(ul:UserList){
-		this.ul.usersLoaded.then((_) => someLogic(ul.users));
-	}
-}
+``` js
+var child = inj.resolveAndCreateChild([MyClass]);
+child.get(MyClass);
 ```
 
-Both the UserList and UserController classes have to deal with asynchronicity. This is not ideal. UserList should only be responsible for dealing with the list of users (e.g., filtering). And UserController should make ui-related decisions based on the list. Neither should be aware of the fact that the list of users comes from the server. In addition, it clutters unit tests with dummy promises that we are forced to provide.
+Or we can register a factory function:
 
-The DI library supports asynchronous bindings, which can be used to clean up UserList and UserController.
-
-``` javascript
-class UserList {
-	constructor(users:List){
-		this.users = users;
-	}
-}
-
-class UserController {
-	constructor(ul:UserList){
-	}
-}
-
+``` js
 var inj = Injector.resolveAndCreate([
-	bind(UserList).toAsyncFactory(() => fetchUsersUsingHttp().then((u) => new UserList(u))),
-	UserController
-])
+  bind('MyClassFactory').toFactory(dep => () => new MyClass(dep), [SomeDependency])
+]);
 
-var uc:Promise = inj.asyncGet(UserController);
+var factory = inj.get('MyClassFactory');
+var instance1 = factory(), instance2 = factory();
+// Depends on the implementation of MyClass, but generally holds.
+expect(instance1).not.toBe(instance2);
 ```
-
-Both UserList, UserController are now async-free. As a result, they are easy to reason about and unit test. We pushed the async code to the edge of our system, where the initialization happens. The initialization code tends to be declarative and relatively simple. And it should be tested with integration tests, not unit tests.
-
-Note that asynchronicity have not disappeared. We just pushed out it of services.
-
-DI also supports asynchronous dependencies, so we can make some of our services responsible for dealing with async.
-
-``` javascript
-class UserList {
-	constructor(users:List){
-		this.users = users;
-	}
-}
-
-class UserController {
-	constructor(@InjectPromise(UserList) ul:Promise){
-	}
-}
-
-var inj = Injector.resolveAndCreate([
-	bind(UserList).toAsyncFactory(() => fetchUsersUsingHttp().then((u) => new UserList(u))),
-	UserController
-])
-
-var uc = inj.get(UserController);
-```
-
-We can get an instance of UserController synchronously. It is possible because we made UserController responsible for dealing with asynchronicity, so the initialization code does not have to.
-
 <!-- -------------------------- -->
 ### HTTP
 -----------------------------------
