@@ -16,6 +16,7 @@
   * [Lifecycle (Hydration and Dehydration)](#lifecycle-hydration-and-dehydration)
 * [Templates](#templates)
   * [Property bindings](#property-bindings)
+  * [Binding events](#binding-events)
   * [String Interpolation](#string-interpolation)
   * [Inline Templates](#inline-templates)
   * [Template Microsyntax](#template-microsyntax)
@@ -458,6 +459,47 @@ done to better support custom elements, and to allow binding for values other th
 
 **NOTE:** Some editors/server side pre-processors may have trouble generating `[]` around the attribute name. For this
 reason Angular also supports a canonical version which is prefixed using `bind-`.
+
+#### Binding Events
+
+Binding events allows wiring events from DOM (or other components) to the Angular controller.
+
+**Short form:** `<some-element (some-event)="statement">`
+
+**Canonical form:** `<some-element on-some-event="statement">`
+
+Where:
+* `some-element` Any element which can generate DOM events (or has an angular directive which generates the event).
+* `some-event` (escaped with `()` or `on-`) is the name of the event `some-event`. In this case the
+  dash-case is converted into camel-case `someEvent`.
+* `statement` is a valid statement (as defined in section below).
+If the execution of the statement returns `false`, then `preventDefault`is applied on the DOM event.
+
+Angular listens to bubbled DOM events (as in the case of clicking on any child), as shown below:
+
+**Short form:** `<some-element (some-event)="statement">`
+
+**Canonical form:** `<some-element on-some-event="statement">`
+
+Example:
+``` js
+@Component(...)
+class Example {
+  submit() {
+    // do something when button is clicked
+  }
+}
+
+<button (click)="submit()">Submit</button>
+```
+
+In the above example, when clicking on the submit button angular will invoke the `submit` method on the surrounding
+component's controller.
+
+
+**NOTE:** Unlike Angular v1, Angular v2 treats event bindings as core constructs not as directives. This means that there
+is no need to create a event directive for each kind of event. This makes it possible for Angular v2 to easily
+bind to custom events of Custom Elements, whose event names are not known ahead of time.
 
 #### String Interpolation
 
