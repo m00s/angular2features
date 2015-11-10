@@ -6,7 +6,7 @@
 
 * [Annotations](#annotations)
   * [Directives](#directives)
-  * [COmponents](#components)
+  * [Components](#components)
 * [View](#view)
   * [Overview](#overview)
   * [Simple View](#simple-view)
