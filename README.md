@@ -40,7 +40,7 @@
 
 ## Annotations
 ### Directives
-Directives allow you to attach behavior to elements in the DOM.
+Directives allow you to attach a behavior to elements in the DOM.
 
 Directives are classes which get instantiated as a response to a particular DOM structure. By controlling the DOM structure, what directives are imported, and their selectors, the developer can use the [composition pattern](http://en.wikipedia.org/wiki/Object_composition) to get a desirable application behavior.
 
