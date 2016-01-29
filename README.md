@@ -1,3 +1,7 @@
+# IMPORTANT!
+# THIS REPO HAS BEEN MOVED IN [AWESOME-ANGULAR2](https://github.com/AngularClass/awesome-angular2/tree/gh-pages/features)
+----------------------------------------
+
 ## Sources
 * [Official documentation](https://github.com/angular/angular/tree/master/modules/angular2/docs)
 * [Viktor Savkin's articles](http://victorsavkin.com/)
